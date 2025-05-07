@@ -1,0 +1,213 @@
+body {
+    background: #222126;
+    color: #f8f8f8;
+    font: 400 16px "Varela Round", sans-serif;
+    padding: 20px;
+    padding-top: 0px;
+    overflow-y: hidden;
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    background: transparent;
+}
+
+.logoWrap {
+    display: flex;
+}
+
+.logoWrap article {
+    font-family: cursive;
+    margin-left: 1rem;
+    font-size: 30px;
+}
+
+.riskopediaLogo {
+    height: 50px;
+    object-fit: cover;
+    margin-bottom: 2rem;
+}
+  
+.generate-btn {
+    outline: none;
+    border: none;
+    background: #9646cc;
+    padding: 10px 12px;
+    border-radius: 5px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.4s ease;
+    font-size: 17px;
+    margin-top: 32px;
+}
+  
+.generate-btn:hover {
+    background: #7916bb;
+}
+
+::selection{
+    color: rgb(68, 68, 68);
+    background: #f3f2f7;
+}
+.wrapper{
+    width: 430px;
+    background: #fff;
+    border-radius: 5px;
+    padding: 30px;
+    padding-bottom: 18px;
+    box-shadow: 0px 0px 20px #ffffff60;
+}
+.wrapper header{
+    color: #4b4276;
+    font-size: 27px;
+    font-weight: 600;
+    text-align: center;
+}
+#upload-form {
+    height: 167px;
+    display: flex;
+    cursor: pointer;
+    margin: 30px 0;
+    margin-bottom: 15px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border-radius: 5px;
+    border: 2px dashed #4b4276;
+}
+#upload-form :where(i, p){
+    color: #4b4276;
+}
+#upload-form i{
+    font-size: 50px;
+}
+#upload-form p{
+    margin-top: 15px;
+    font-size: 16px;
+}
+
+section .row{
+    margin-bottom: 10px;
+    background: #f3f2f7;
+    list-style: none;
+    padding: 15px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+section .row i{
+    color: #4b4276;
+    font-size: 30px;
+}
+section .details span{
+    font-size: 14px;
+}
+
+.uploaded-area .row .details .name{
+    color: #2e2e2e;
+    font-size: 15px;
+}
+
+.progress-area .row .content{
+    width: 100%;
+    margin-left: 15px;
+}
+.progress-area .details{
+    display: flex;
+    align-items: center;
+    margin-bottom: 7px;
+    justify-content: space-between;
+}
+.progress-area .content .progress-bar{
+    height: 6px;
+    width: 100%;
+    margin-bottom: 4px;
+    background: #fff;
+    border-radius: 30px;
+}
+.content .progress-bar .progress{
+    height: 100%;
+    width: 0%;
+    background: #6990F2;
+    border-radius: inherit;
+}
+.uploaded-area{
+    max-height: 232px;
+}
+.uploaded-area.onprogress{
+    max-height: 150px;
+}
+.uploaded-area::-webkit-scrollbar{
+    width: 0px;
+}
+.uploaded-area .row .content{
+    display: flex;
+    align-items: center;
+}
+.uploaded-area .row .details{
+    display: flex;
+    margin-left: 15px;
+    flex-direction: column;
+}
+.uploaded-area .row .details .size{
+    color: #404040;
+    font-size: 11px;
+}
+.uploaded-area i.fa-check{
+    font-size: 16px;
+}
+
+.loader-wrap {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+  
+.loader-wrap img {
+    height: 50px;
+}
+  
+.loader-wrap span {
+    color: grey;
+}
+
+.generateWrap {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+  
+.generateWrap img {
+    height: 50px;
+}
+  
+.generateWrap span {
+    color: grey;
+}
+
+.btnWrap {
+    width: 100%;
+    display: none;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.pdfBtn {
+    position: relative;
+    border: none;
+    outline: none;
+    padding: 10px 15px;
+    background-color: #4b4276;
+    color: #f8f8f8;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+}

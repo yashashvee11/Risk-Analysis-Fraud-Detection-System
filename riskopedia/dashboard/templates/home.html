@@ -1,0 +1,164 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | Riskopedia</title>
+    <script src="{% static '/js/progress.js' %}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}">
+</head>
+<body>
+    <div class="upload-container">
+        <div class="logoWrap">
+            <img class="riskopediaLogo" src="{% static 'assets/riskopediaLogo.svg' %}" alt="riskopediaLogo">
+            <article>Riskopedia</article>
+        </div>
+        <div class="wrapper">
+            <header>Upload Transactions</header>
+            <form id="upload-form" action="/upload">
+                {% csrf_token %}
+                <label style="font-size: 12px; margin-top: 7px; color: #a5a5a5;" for="dataType">Data Type</label>
+                <select style="border: none; outline: none; margin-bottom: 7px;
+                color: #616161; background: #fff;" name="dataType" id="dataType">
+                    <option value="unstructured">Unstructured</option>
+                    <option value="structured">Structured</option>
+                </select>
+                <input class="file-input" type="file" name="file" hidden>
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Browse File to Upload</p>
+            </form>
+            <section class="progress-area"></section>
+            <section class="uploaded-area"></section>
+            <div class="loader-wrap">
+                <img src="{% static 'assets/loader.svg' %}" alt="loader"/>
+                <span>Uploading transactions...</span>
+            </div>
+            <div class="generateWrap">
+                <img src="{% static 'assets/loader.svg' %}" alt="loader"/>
+                <span>Analyzing Risks...</span>
+            </div>
+            <form class="btnWrap" action={% url 'dashboardView' %} method="POST">
+                {% csrf_token %}
+                <button type="submit" class="pdfBtn">
+                    <i class="fa-solid fa-chart-simple"></i>&ensp;View Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+    <script>
+        // On doc upload event
+        var form = document.querySelector("#upload-form");
+        var fileInput = document.querySelector(".file-input");
+        var progressArea = document.querySelector(".progress-area");
+        var uploadedArea = document.querySelector(".uploaded-area");
+        var csrfToken = document.getElementsByName("csrfmiddlewaretoken");
+        var loaderWrap = document.querySelector(".loader-wrap");
+        var generateWrap = document.querySelector(".generateWrap");
+        var btnWrap = document.querySelector(".btnWrap");
+        var pdfBtn = document.querySelector(".pdfBtn");
+
+        if (pdfBtn) {
+            pdfBtn.addEventListener("click", () => {
+                generateWrap.style.display = 'flex';
+            });
+        }
+
+        if (form) {
+            form.addEventListener("click", () => {
+                fileInput.click();
+            });
+            
+            fileInput.onchange = ({target})=>{
+                let alllowed_mimetypes = ['text/plain','text/csv'];
+                let allowed_size_mb = 5;
+
+                let files = target.files;
+                if (files.length === 0) {
+                    alert('No file upoaded');
+                    return
+                }
+                for (idx=0; idx < files.length; idx++) {
+                    let file = target.files[idx];
+                    console.log(file.type);
+                    if(!alllowed_mimetypes.includes(file.type)) {
+                        alert('Error: Only txt files are supported');
+                        return
+                    }
+                    if(file.size <= allowed_size_mb * 1024 * 1024){
+                        let fileName = file.name;
+                        if(fileName.length >= 12){
+                        let splitName = fileName.split('.');
+                        fileName = splitName[0].substring(0, 13) + "... ." + splitName[1];
+                        }
+                        loaderWrap.style.display = 'flex';
+                        uploadFile(fileName);
+                    } else {
+                        alert('Error: file size exceeded for ' + file.name);
+                        return
+                    }
+                }
+                
+            }
+
+            function sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            function uploadFile(name){
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", "");
+                xhr.setRequestHeader("x-requested-with", "XMLHttpRequest")
+                xhr.setRequestHeader("x-requested-with", "XMLHttpRequest")
+                xhr.upload.addEventListener("progress", ({loaded, total}) =>{
+                    let fileLoaded = Math.floor((loaded / total) * 100);
+                    let fileTotal = Math.floor(total / 1000);
+                    let fileSize;
+                    (fileTotal < 1024) ? fileSize = fileTotal + " KB" : fileSize = (loaded / (1024*1024)).toFixed(2) + " MB";
+                    let progressHTML = `<li class="row">
+                                        <i class="fas fa-file-alt"></i>
+                                        <div class="content">
+                                            <div class="details">
+                                                <span class="name">${name} • Uploading</span>
+                                                <span class="percent">${fileLoaded}%</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                            <div class="progress" style="width: ${fileLoaded}%"></div>
+                                            </div>
+                                        </div>
+                                        </li>`;
+                    uploadedArea.classList.add("onprogress");
+                    progressArea.innerHTML = progressHTML;
+                    if(loaded == total){
+                    progressArea.innerHTML = "";
+                    let uploadedHTML = `<li class="row">
+                                            <div class="content upload">
+                                            <i class="fas fa-file-alt"></i>
+                                            <div class="details">
+                                                <span class="name">${name} • Uploaded</span>
+                                                <span class="size">${fileSize}</span>
+                                            </div>
+                                            </div>
+                                            <i class="fas fa-check"></i>
+                                        </li>`;
+                    uploadedArea.classList.remove("onprogress");
+                    uploadedArea.insertAdjacentHTML("afterbegin", uploadedHTML);
+                    }
+                });
+                let data = new FormData(form);
+                xhr.send(data);
+
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === xhr.HEADERS_RECEIVED) {
+                        loaderWrap.style.display = 'none';
+                        btnWrap.style.display = 'flex';
+                    }
+                };
+            }
+        }
+    </script>
+</body>
+</html>

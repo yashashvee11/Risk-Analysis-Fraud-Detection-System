@@ -1,0 +1,660 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Riskopedia</title>
+    <script src="{% static '/js/doughnut.js' %}"></script>
+    <script src="{% static '/js/progress.js' %}"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+      integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/dashboard.css' %}"
+    />
+  </head>
+  <body>
+    <div class="dashboardWrap">
+      <div class="riskHeaderBag">
+        <div class="riskHeaderWrap">
+          <i class="fa-solid fa-location-crosshairs riskHeaderIcon"></i>
+          <h2 class="riskHeader">Risk Dashboard</h2>
+          <span class="riskCount"><div>12</div></span>
+        </div>
+        <div>
+          <button class="pdfBtn print-btn">
+            <i class="fa fa-file"></i>&ensp;Generate Report
+          </button>
+        </div>
+      </div>
+      <div class="dataCardsWrap">
+        <div class="dataCardWrap">
+          <div class="dataCard">
+            <div class="cardDetails">
+              <h2 class="cardInfo">
+                {{ totalAvgRiskScore }}<span class="percentText">%</span>
+              </h2>
+              <article class="cardLabel">Avg. Risk Score</article>
+            </div>
+            <img
+              class="cardImage"
+              style="height: 130px; margin-top: 15px"
+              src="{% static 'assets/riskIcon.svg' %}"
+              alt="riskScale"
+            />
+          </div>
+        </div>
+        <div class="dataCardWrap">
+          <div class="dataCard">
+            <canvas id="riskDoughnut"></canvas>
+          </div>
+        </div>
+        <div class="dataCardWrap">
+          <div class="dataCard" style="padding-top: 5px">
+            <canvas id="riskBar"></canvas>
+          </div>
+        </div>
+        <div class="dataCardWrap">
+          <div class="dataCard" style="padding-top: 5px">
+            <canvas id="riskLine"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="chartWrap">
+        <div class="chartBag">
+          <canvas id="riskRadar"></canvas>
+        </div>
+        <div class="inputBag">
+          <div class="upload-container">
+            <div class="wrapper">
+              <table class="fl-table">
+                <thead>
+                  <tr>
+                    <th>Txn. Id</th>
+                    <th>Risk Score</th>
+                    <th>Category</th>
+                    <th>Sender's Entitȳ</th>
+                    <th>Receiver's Entitȳ</th>
+                  </tr>
+                </thead>
+                {{ transactions|json_script:"transactions" }}
+                <div class="tbodyWrap">
+                  <tbody>
+                    {% for txn in transactions %}
+                    <tr>
+                      <td>
+                        <input
+                          type="radio"
+                          name="txnId"
+                          value="{{ forloop.counter0 }}"
+                        />
+                        {{txn.transaction_id}}
+                      </td>
+                      <td>{{txn.risk_score}}</td>
+                      <td>
+                        {% if txn.risk_category == 'high' %}
+                        <span class="highRisk">{{txn.risk_category}}</span>
+                        {% endif %} {% if txn.risk_category == 'medium' %}
+                        <span class="mediumRisk">{{txn.risk_category}}</span>
+                        {% endif %} {% if txn.risk_category == 'low' %}
+                        <span class="lowRisk">{{txn.risk_category}}</span>
+                        {% endif %}
+                      </td>
+                      <td>{{txn.sender_entity_type}}</td>
+                      <td>{{txn.receiver_entity_type}}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+
+                  <tbody></tbody>
+                </div>
+              </table>
+              <div class="justificationWrap">
+                <h4>Justification</h4>
+                <article id="justificationText">
+                  {{ transactions.0.detailed_justification }}
+                </article>
+                <div
+                  id="referencesList"
+                  style="display: flex; flex-direction: row; gap: 10px"
+                >
+                  <!-- {% for ref in txn.references%}
+                  <div class="refWrap">
+                    <a class="refLink" target="_blank" href="{{ ref }}">
+                      <i class="fa fa-link"></i>
+                      wikipedia
+                    </a>
+                  </div>
+                  {% endfor %} -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS STARTS HERE -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      data-geocountries="{{ geoRiskCountries }}"
+      data-geovalues="{{ geoRiskValues }}"
+    >
+      const riskDoughnut = document.getElementById("riskDoughnut");
+      let doughnutData = document.currentScript.dataset;
+      let geoRiskCountries = doughnutData.geocountries?.replace(/'/g, '"');
+      let geoRiskValues = doughnutData.geovalues?.replace(/'/g, '"');
+
+      new Chart(riskDoughnut, {
+        type: "doughnut",
+        data: {
+          labels: JSON.parse(geoRiskCountries),
+          datasets: [
+            {
+              label: "# of Incidents",
+              data: JSON.parse(geoRiskValues),
+              borderWidth: 0,
+              hoverBackgroundColor: "#f8f8f8",
+              backgroundColor: [
+                "#6c59c9",
+                "#3e2e8d",
+                "#5843c2",
+                "#8475cf",
+                "#ada4d8",
+              ],
+            },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          animation: {
+            animateRotate: true,
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: "left",
+              labels: {
+                boxWidth: 35,
+                usePointStyle: true,
+                pointStyle: "rect",
+                pointStyleWidth: 10,
+                padding: 12,
+                color: "#b6b6b6",
+              },
+              title: {
+                display: true,
+                color: "#ffffff",
+                text: "Geo-Risk Map",
+                font: {
+                  size: 13,
+                  weight: "bold",
+                },
+              },
+            },
+          },
+        },
+      });
+    </script>
+    <script data-categoryvalues="{{ incidentRiskCategoryValues }}">
+      const riskBar = document.getElementById("riskBar");
+      let barData = document.currentScript.dataset;
+      let incidentRiskCategoryValues = barData.categoryvalues?.replace(
+        /'/g,
+        '"'
+      );
+
+      new Chart(riskBar, {
+        type: "bar",
+        data: {
+          labels: ["Low Risk", "Medium Risk", "High Risk"],
+          datasets: [
+            {
+              label: "# of Votes",
+              data: JSON.parse(incidentRiskCategoryValues),
+              borderWidth: 0,
+              backgroundColor: "#8475cf",
+              hoverBackgroundColor: "#6c59c9",
+              padding: 12,
+            },
+          ],
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: "#b6b6b6",
+              },
+            },
+          },
+          maintainAspectRatio: false,
+          indexAxis: "y",
+          plugins: {
+            title: {
+              display: true,
+              color: "#ffffff",
+              text: "No. of Incidents",
+              font: {
+                size: 15,
+                weight: "bold",
+              },
+            },
+            legend: {
+              display: false,
+              position: "top",
+              labels: {
+                boxWidth: 35,
+                usePointStyle: true,
+                pointStyle: "rect",
+                pointStyleWidth: 10,
+                padding: 12,
+                color: "#b6b6b6",
+              },
+              title: {
+                display: true,
+                color: "#ffffff",
+                text: "Recent Transactions",
+                font: {
+                  size: 13,
+                  weight: "bold",
+                },
+              },
+            },
+          },
+        },
+      });
+    </script>
+    <script
+      data-toporgs="{{ topRiskOrgs }}"
+      data-topvalues="{{ topRiskValues }}"
+    >
+      const riskLine = document.getElementById("riskLine");
+      let lineData = document.currentScript.dataset;
+      let topRiskOrgs = lineData.toporgs?.replace(/'/g, '"');
+      let topRiskValues = lineData.topvalues?.replace(/'/g, '"');
+
+      new Chart(riskLine, {
+        type: "line",
+        data: {
+          labels: JSON.parse(topRiskOrgs),
+          datasets: [
+            {
+              label: "# of Incidents",
+              data: JSON.parse(topRiskValues),
+              borderWidth: 2,
+              hoverBackgroundColor: "#f8f8f8",
+              borderColor: "#6c59c9",
+              fill: true,
+              backgroundColor: "#6c59c950",
+              pointBackgroundColor: "#6c59c9",
+              pointHoverBorderColor: "#6c59c9",
+              pointHoverBackgroundColor: "#6c59c9",
+            },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          animation: {
+            animateRotate: true,
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                display: false,
+                color: "#b6b6b6",
+                padding: 15,
+                position: "left",
+              },
+            },
+            y: { beginAtZero: true },
+          },
+          plugins: {
+            legend: {
+              display: false,
+              position: "left",
+              labels: {
+                boxWidth: 35,
+                usePointStyle: true,
+                pointStyle: "rect",
+                pointStyleWidth: 10,
+                padding: 12,
+                color: "#b6b6b6",
+              },
+            },
+            title: {
+              display: true,
+              color: "#ffffff",
+              text: "Top Risk Orgs",
+              font: {
+                size: 15,
+                weight: "bold",
+              },
+            },
+          },
+        },
+      });
+    </script>
+    <script data-transactions="{{ transactions }}">
+      let radarData = document.currentScript.dataset;
+      let transactions = radarData.transactions?.replace(/'/g, '"');
+      transactions = JSON.parse(transactions);
+
+      let txnId = 0;
+      let radarList = transactions[txnId]["individual_risk_scores"];
+      document
+        .querySelector(".inputBag")
+        .addEventListener("change", function (event) {
+          if (event.target.matches('input[type="radio"][name="txnId"]')) {
+            txnId = event.target.value;
+
+            // Changing justification text based on selection
+            let justification = transactions[txnId]["detailed_justification"];
+            let justificationElement =
+              document.querySelector("#justificationText");
+            justificationElement.innerHTML = justification;
+
+            let references = transactions[txnId]["references"];
+            let referencesContainer = document.getElementById("referencesList");
+            referencesContainer.innerHTML = "";
+
+            const wikiNames = references.map((ref) =>
+              ref.split("/wiki/").pop().replace(/_/g, " ").slice(0, 30)
+            );
+
+            if (references[0] !== "") {
+              references.forEach((ref, index) => {
+                const wikiName = wikiNames[index]; // Get the corresponding wiki name
+
+                if (wikiName.trim() !== "") {
+                  // Skip if wikiName is empty
+                  let refDiv = document.createElement("div");
+                  refDiv.classList.add("refWrap");
+                  refDiv.innerHTML = `
+                      <a class="refLink" target="_blank" href="${ref}">
+                        <i class="fa fa-link"></i> ${wikiName}
+                      </a>
+                  `;
+                  referencesContainer.appendChild(refDiv);
+                }
+              });
+            }
+
+            // Changing chart data based on selection
+            radarList = transactions[txnId]["individual_risk_scores"];
+            riskRadarChart.destroy();
+            const riskRadar = document.getElementById("riskRadar");
+            riskRadarChart = new Chart(riskRadar, {
+              type: "radar",
+              data: {
+                labels: [
+                  "Sender's Org",
+                  "Sender's Address",
+                  "Receiver's Org",
+                  "Receiver's Address",
+                  "Add. Notes",
+                ],
+                datasets: [
+                  {
+                    label: transactions[txnId]["transaction_id"],
+                    data: radarList,
+                    fill: true,
+                    backgroundColor: "rgba(255, 99, 132, 0.4)",
+                    borderColor: "rgb(255, 99, 132)",
+                    pointBackgroundColor: "rgb(255, 99, 132)",
+                    pointHoverBorderColor: "rgb(255, 99, 132)",
+                  },
+                ],
+              },
+              options: {
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: "top",
+                    labels: {
+                      color: "#b6b6b6",
+                      pointStyleWidth: 10,
+                      padding: 15,
+                    },
+                    title: {
+                      display: true,
+                      color: "#ffffff",
+                      text: "Risk Score Map",
+                      font: {
+                        size: 16,
+                        weight: "bold",
+                      },
+                    },
+                  },
+                },
+                elements: {
+                  line: {
+                    borderWidth: 2,
+                  },
+                },
+                scales: {
+                  r: {
+                    beginAtZero: true,
+                    angleLines: {
+                      color: "#b6b6b675",
+                      lineWidth: 1,
+                    },
+                    grid: {
+                      color: "#b6b6b675",
+                      lineWidth: 1,
+                    },
+                    pointLabels: {
+                      color: "#fff",
+                      font: {
+                        size: 11,
+                      },
+                    },
+                    ticks: {
+                      color: "#f6f6f6",
+                      backdropColor: "rgba(0, 0, 0, 0.3)",
+                    },
+                  },
+                },
+              },
+            });
+          }
+        });
+
+      const riskRadar = document.getElementById("riskRadar");
+      var riskRadarChart = new Chart(riskRadar, {
+        type: "radar",
+        data: {
+          labels: [
+            "Sender's Org",
+            "Sender's Address",
+            "Receiver's Org",
+            "Receiver's Address",
+            "Add. Notes",
+          ],
+          datasets: [
+            {
+              label: transactions[txnId]["transaction_id"],
+              data: radarList,
+              fill: true,
+              backgroundColor: "rgba(255, 99, 132, 0.4)",
+              borderColor: "rgb(255, 99, 132)",
+              pointBackgroundColor: "rgb(255, 99, 132)",
+              pointHoverBorderColor: "rgb(255, 99, 132)",
+            },
+          ],
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                color: "#b6b6b6",
+                pointStyleWidth: 10,
+                padding: 15,
+              },
+              title: {
+                display: true,
+                color: "#ffffff",
+                text: "Risk Score Map",
+                font: {
+                  size: 16,
+                  weight: "bold",
+                },
+              },
+            },
+          },
+          elements: {
+            line: {
+              borderWidth: 2,
+            },
+          },
+          scales: {
+            r: {
+              beginAtZero: true,
+              angleLines: {
+                color: "#b6b6b675",
+                lineWidth: 1,
+              },
+              grid: {
+                color: "#b6b6b675",
+                lineWidth: 1,
+              },
+              pointLabels: {
+                color: "#fff",
+                font: {
+                  size: 11,
+                },
+              },
+              ticks: {
+                color: "#f6f6f6",
+                backdropColor: "rgba(0, 0, 0, 0.3)",
+              },
+            },
+          },
+        },
+      });
+    </script>
+    <script>
+      // On doc upload event
+      var form = document.querySelector("#upload-form");
+      var fileInput = document.querySelector(".file-input");
+      var progressArea = document.querySelector(".progress-area");
+      var uploadedArea = document.querySelector(".uploaded-area");
+      var csrfToken = document.getElementsByName("csrfmiddlewaretoken");
+      var loaderWrap = document.querySelector(".loader-wrap");
+
+      if (form) {
+        form.addEventListener("click", () => {
+          console.log("Cliceked on form", form);
+          fileInput.click();
+        });
+
+        fileInput.onchange = ({ target }) => {
+          let alllowed_mimetypes = ["text/plain"];
+          let allowed_size_mb = 5;
+
+          let files = target.files;
+          if (files.length === 0) {
+            alert("No file upoaded");
+            return;
+          }
+          for (idx = 0; idx < files.length; idx++) {
+            let file = target.files[idx];
+            console.log(file.type);
+            if (!alllowed_mimetypes.includes(file.type)) {
+              alert("Error: Only txt files are supported");
+              return;
+            }
+            if (file.size <= allowed_size_mb * 1024 * 1024) {
+              let fileName = file.name;
+              if (fileName.length >= 12) {
+                let splitName = fileName.split(".");
+                fileName =
+                  splitName[0].substring(0, 13) + "... ." + splitName[1];
+              }
+              loaderWrap.style.display = "flex";
+              uploadFile(fileName);
+            } else {
+              alert("Error: file size exceeded for " + file.name);
+              return;
+            }
+          }
+        };
+
+        function sleep(ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        function uploadFile(name) {
+          let xhr = new XMLHttpRequest();
+          xhr.open("POST", "");
+          xhr.setRequestHeader("x-requested-with", "XMLHttpRequest");
+          xhr.setRequestHeader("x-requested-with", "XMLHttpRequest");
+          xhr.upload.addEventListener("progress", ({ loaded, total }) => {
+            let fileLoaded = Math.floor((loaded / total) * 100);
+            let fileTotal = Math.floor(total / 1000);
+            let fileSize;
+            fileTotal < 1024
+              ? (fileSize = fileTotal + " KB")
+              : (fileSize = (loaded / (1024 * 1024)).toFixed(2) + " MB");
+            let progressHTML = `<li class="row">
+                                        <i class="fas fa-file-alt"></i>
+                                        <div class="content">
+                                            <div class="details">
+                                            <span class="name">${name} • Uploading</span>
+                                            <span class="percent">${fileLoaded}%</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                            <div class="progress" style="width: ${fileLoaded}%"></div>
+                                            </div>
+                                        </div>
+                                        </li>`;
+            uploadedArea.classList.add("onprogress");
+            progressArea.innerHTML = progressHTML;
+            if (loaded == total) {
+              progressArea.innerHTML = "";
+              let uploadedHTML = `<li class="row">
+                                            <div class="content upload">
+                                            <i class="fas fa-file-alt"></i>
+                                            <div class="details">
+                                                <span class="name">${name} • Uploaded</span>
+                                                <span class="size">${fileSize}</span>
+                                            </div>
+                                            </div>
+                                            <i class="fas fa-check"></i>
+                                        </li>`;
+              uploadedArea.classList.remove("onprogress");
+              uploadedArea.insertAdjacentHTML("afterbegin", uploadedHTML);
+            }
+          });
+          let data = new FormData(form);
+          xhr.send(data);
+
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState === xhr.HEADERS_RECEIVED) {
+              loaderWrap.style.display = "none";
+            }
+          };
+        }
+      }
+
+      var printBtn = document.querySelector(".print-btn");
+      if (printBtn) {
+        printBtn.addEventListener("click", function (event) {
+          window.print();
+        });
+      }
+    </script>
+  </body>
+</html>
